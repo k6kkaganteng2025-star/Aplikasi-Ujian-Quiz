@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Ujian & Kuis Online Sekolah</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #111827; /* slate-900 */
+            --bg-secondary: #1f2937; /* slate-800 */
+            --bg-tertiary: #374151; /* slate-700 */
+            --border-color: #4b5563; /* slate-600 */
+            --text-primary: #f9fafb; /* gray-50 */
+            --text-secondary: #d1d5db; /* slate-300 */
+            --accent-color: #22d3ee; /* cyan-400 */
+        }
+        html.light {
+            --bg-primary: #f3f4f6; /* gray-100 */
+            --bg-secondary: #ffffff; /* white */
+            --bg-tertiary: #e5e7eb; /* gray-200 */
+            --border-color: #d1d5db; /* gray-300 */
+            --text-primary: #111827; /* gray-900 */
+            --text-secondary: #4b5563; /* gray-600 */
+            --accent-color: #0891b2; /* cyan-600 */
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        #app-container {
+            background-color: var(--bg-secondary);
+            border-color: var(--border-color);
+        }
+        input, select, textarea, .btn-secondary {
+            background-color: var(--bg-tertiary);
+            border-color: var(--border-color);
+            color: var(--text-primary);
+        }
+        .text-accent { color: var(--accent-color); }
+        .text-desc { color: var(--text-secondary); }
+        .admin-tab.active { border-color: var(--accent-color); color: var(--accent-color); }
+        .btn-lang.active { background-color: var(--accent-color); color: white; }
+
+        .correct { background-color: #16a34a !important; color: white !important; border-color: #15803d !important; }
+        .incorrect { background-color: #dc2626 !important; color: white !important; border-color: #b91c1c !important; }
+        .selected { background-color: #0891b2 !important; color: white !important; border-color: #0e7490 !important; }
+        .btn-disabled { pointer-events: none; opacity: 0.8; }
+        #question-editor-modal { background-color: rgba(0,0,0,0.7); }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4 transition-colors duration-300">
+
+    <div id="app-container" class="w-full max-w-4xl mx-auto rounded-2xl shadow-2xl p-6 md:p-8 border relative">
+        
+        <!-- Header Controls -->
+        <div class="absolute top-4 right-4 flex gap-2 items-center z-10">
+            <button id="theme-toggle-btn" class="bg-tertiary p-2 rounded-full hover:bg-slate-600 transition">
+                <svg id="theme-icon-light" class="h-4 w-4 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg id="theme-icon-dark" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+            <button id="lang-id-btn" class="btn-lang active bg-tertiary hover:bg-slate-600 text-xs font-bold py-1 px-3 rounded-md transition">ID</button>
+            <button id="lang-en-btn" class="btn-lang bg-tertiary hover:bg-slate-600 text-xs font-bold py-1 px-3 rounded-md transition">EN</button>
+        </div>
+
+        <!-- Main Menu Screen (Student Focused) -->
+        <div id="main-menu-screen">
+            <h1 data-key="portalTitle" class="text-3xl md:text-4xl font-bold text-center text-accent mb-2">Portal Ujian & Kuis</h1>
+            <p data-key="welcomeMessage" class="text-desc text-center mb-10">Selamat datang! Silakan pilih mode yang Anda inginkan.</p>
+            <div class="flex flex-col md:flex-row gap-4">
+                <button id="start-quiz-mode-btn" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-4 px-6 rounded-lg text-lg transition-transform transform hover:scale-105">
+                    <h2 data-key="quizModeTitle" class="text-xl font-bold">Kuis Latihan</h2>
+                    <p data-key="quizModeDesc" class="font-normal text-sm">Asah pengetahuan dengan kode</p>
+                </button>
+                <button id="start-exam-mode-btn" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-4 px-6 rounded-lg text-lg transition-transform transform hover:scale-105">
+                    <h2 data-key="examModeTitle" class="text-xl font-bold">Ujian Semester</h2>
+                    <p data-key="examModeDescStudent" class="font-normal text-sm">Wajib login dengan NISN</p>
+                </button>
+            </div>
+             <p class="text-center text-desc text-xs mt-8">
+                <a href="#" id="admin-login-link" data-key="adminLoginLink" class="hover:text-accent">Login sebagai Guru (Admin)</a>
+            </p>
+        </div>
+        
+        <!-- Quiz Access Code Screen -->
+        <div id="quiz-code-screen" class="hidden">
+            <h1 data-key="quizCodeTitle" class="text-3xl font-bold text-center text-accent mb-4">Masuk Kuis Latihan</h1>
+            <p data-key="quizCodeDesc" class="text-desc text-center mb-8">Masukkan kode akses untuk memulai.</p>
+            <form id="quiz-code-form">
+                <div class="mb-4">
+                    <label for="quiz-code" data-key="accessCodeLabel" class="block mb-2 text-sm font-medium text-desc">Kode Akses</label>
+                    <input type="text" id="quiz-code" class="border text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5" placeholder="••••••••" required>
+                </div>
+                <p id="quiz-code-error" data-key="invalidCodeError" class="text-red-500 text-sm text-center mb-4 hidden">Kode akses salah!</p>
+                <button type="submit" data-key="enterButton" class="w-full bg-sky-500 hover:bg-sky-600 text-white font-bold py-3 px-8 rounded-lg text-lg transition">Masuk</button>
+                <button type="button" id="back-to-menu-from-code" data-key="backToMenuButton" class="w-full mt-4 btn-secondary font-bold py-2 px-4 rounded-lg">Kembali ke Menu</button>
+            </form>
+        </div>
+
+        <!-- Login Screen (Universal) -->
+        <div id="login-screen" class="hidden">
+            <h1 id="login-title" class="text-3xl font-bold text-center text-accent mb-4"></h1>
+            <p id="login-desc" class="text-desc text-center mb-8"></p>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="username" id="username-label" class="block mb-2 text-sm font-medium text-desc"></label>
+                    <input type="text" id="username" class="border text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5" required>
+                </div>
+                <div class="mb-6">
+                    <label for="password" data-key="passwordLabel" class="block mb-2 text-sm font-medium text-desc">Password</label>
+                    <input type="password" id="password" class="border text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 block w-full p-2.5" placeholder="•••••••••" required>
+                </div>
+                <p id="login-error" data-key="invalidLoginError" class="text-red-500 text-sm text-center mb-4 hidden">Login Gagal! Periksa kembali data Anda.</p>
+                <button type="submit" data-key="loginButton" class="w-full bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-8 rounded-lg text-lg transition">Login</button>
+                <button type="button" id="back-to-menu-from-login" data-key="backToMenuButton" class="w-full mt-4 btn-secondary font-bold py-2 px-4 rounded-lg">Kembali ke Menu</button>
+            </form>
+        </div>
+
+        <!-- Admin Dashboard Screen -->
+        <div id="admin-screen" class="hidden">
+            <div class="flex justify-between items-start">
+                <div>
+                    <h1 data-key="adminTitle" class="text-3xl font-bold text-accent mb-2">Dasbor Guru</h1>
+                    <p id="admin-welcome" class="text-desc mb-6"></p>
+                </div>
+                <button id="admin-logout-btn" data-key="logoutButton" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Logout</button>
+            </div>
+            
+            <div class="border-b border-gray-600 mb-4">
+                <nav class="-mb-px flex gap-4" aria-label="Tabs">
+                    <button class="admin-tab active whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm" data-tab="results" data-key="resultsTab">Hasil Siswa</button>
+                    <button class="admin-tab whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-transparent" data-tab="exam-questions" data-key="examQuestionsTab">Kelola Soal Ujian</button>
+                    <button class="admin-tab whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm border-transparent" data-tab="quiz-questions" data-key="quizQuestionsTab">Kelola Soal Kuis</button>
+                </nav>
+            </div>
+
+            <div id="admin-tab-content">
+                <div id="admin-results-content">
+                     <div class="bg-tertiary p-4 rounded-lg mb-4">
+                        <h3 data-key="summaryTitle" class="text-lg font-semibold mb-2">Ringkasan</h3>
+                        <p><span data-key="studentsSubmitted">Jumlah Siswa Mengerjakan Ujian:</span> <span id="submission-count" class="font-bold text-accent">0</span></p>
+                    </div>
+                    <div id="exam-results-list" class="space-y-3 max-h-[40vh] overflow-y-auto pr-2"></div>
+                </div>
+                <div id="admin-questions-content" class="hidden">
+                    <div class="flex justify-between items-center mb-4">
+                        <select id="grade-selector" class="border text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 p-2.5"></select>
+                        <button id="add-question-btn" data-key="addQuestionButton" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-4 rounded-lg">Tambah Soal Baru</button>
+                    </div>
+                    <div id="question-list" class="space-y-3 max-h-[40vh] overflow-y-auto pr-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz/Exam Screen -->
+        <div id="quiz-screen" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h2 id="quiz-title" class="text-xl font-bold text-accent"></h2>
+                <div id="score-display" class="text-lg font-semibold bg-tertiary px-4 py-1 rounded-lg"><span data-key="scoreLabel">Skor</span>: <span id="score">0</span></div>
+            </div>
+            <div class="w-full bg-tertiary rounded-full h-2.5 mb-6">
+                <div id="progress-bar" class="bg-cyan-500 h-2.5 rounded-full" style="width: 0%"></div>
+            </div>
+            
+            <img id="question-image" src="" alt="Gambar Soal" class="max-w-xs mx-auto rounded-lg mb-4 hidden">
+            <p id="question-text" class="text-xl md:text-2xl font-medium mb-8 min-h-[60px] text-center"></p>
+            
+            <div id="answer-buttons" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            
+            <div class="mt-8 flex justify-between items-center">
+                <button id="back-to-menu-from-quiz" data-key="backButton" class="btn-secondary font-bold py-2 px-6 rounded-lg transition">Kembali</button>
+                <button id="next-btn" data-key="nextButton" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-2 px-6 rounded-lg transition hidden">Selanjutnya &rarr;</button>
+                <button id="finish-btn" data-key="finishButton" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg transition hidden">Selesai</button>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div id="results-screen" class="hidden text-center">
+            <h1 data-key="resultsTitle" class="text-3xl md:text-4xl font-bold text-accent mb-4">Hasil Anda</h1>
+            <div id="result-details" class="bg-tertiary rounded-lg p-6 mb-8 text-2xl">
+                <p id="student-name-result" class="text-xl mb-4 hidden"></p>
+                <p data-key="finalScoreLabel">Skor Akhir:</p>
+                <p class="text-5xl font-bold my-4 text-accent"><span id="final-score">0</span> / <span id="total-questions">0</span></p>
+                <p id="result-message" class="text-lg text-desc"></p>
+            </div>
+            <button id="restart-btn" data-key="backToMainMenuButton" class="bg-cyan-500 hover:bg-cyan-600 text-white font-bold py-3 px-8 rounded-lg text-lg transition">Kembali ke Menu Utama</button>
+        </div>
+    </div>
+
+    <!-- Question Editor Modal -->
+    <div id="question-editor-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4" >
+        <div class="w-full max-w-2xl bg-secondary rounded-2xl shadow-2xl p-6 border border-gray-600 relative">
+            <h2 id="modal-title" class="text-2xl font-bold text-accent mb-6"></h2>
+            <form id="question-form">
+                <input type="hidden" id="question-mode">
+                <input type="hidden" id="question-grade">
+                <input type="hidden" id="question-index">
+
+                <div class="mb-4">
+                    <label for="question-input" data-key="questionLabel" class="block mb-2 text-sm font-medium text-desc">Pertanyaan</label>
+                    <textarea id="question-input" rows="3" class="border text-sm rounded-lg block w-full p-2.5" required></textarea>
+                </div>
+                <div class="mb-4">
+                    <label for="image-url-input" data-key="imageUrlLabel" class="block mb-2 text-sm font-medium text-desc">URL Gambar (Opsional)</label>
+                    <input type="text" id="image-url-input" class="border text-sm rounded-lg block w-full p-2.5">
+                </div>
+                <hr class="border-gray-600 my-4">
+                <div id="answers-container" class="space-y-3 mb-6">
+                </div>
+                <div class="flex justify-between items-center">
+                     <p data-key="correctAnswerInfo" class="text-sm text-desc">Pilih jawaban yang benar</p>
+                     <button type="button" id="add-answer-btn" data-key="addAnswerButton" class="btn-secondary text-xs font-bold py-1 px-3 rounded-md">+ Jawaban</button>
+                </div>
+
+                <div class="mt-8 flex justify-end gap-4">
+                    <button type="button" id="cancel-edit-btn" data-key="cancelButton" class="btn-secondary font-bold py-2 px-6 rounded-lg">Batal</button>
+                    <button type="submit" id="save-question-btn" data-key="saveButton" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-lg">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- KONFIGURASI & DATABASE ---
+        const QUIZ_ACCESS_CODE = "12345";
+        const adminDatabase = [{ username: "guru", password: "guruspesial", name: "Ibu Guru" }];
+        const studentDatabase = [
+            { nisn: "12345678", password: "password123", name: "Andi Pratama", grade: 12 },
+            { nisn: "87654321", password: "password456", name: "Bunga Citra", grade: 11 },
+            { nisn: "11223344", password: "password789", name: "Candra Wijaya", grade: 10 }
+        ];
+        let examResultsDatabase = [];
+        let questionsDB = {
+            id: {
+                quiz: {
+                    all: [ 
+                        { question: "Siapakah presiden pertama Republik Indonesia?", answers: [{ text: "Soekarno", correct: true }, { text: "Soeharto", correct: false }] },
+                        { question: "Apa ibukota dari negara Jepang?", answers: [{ text: "Tokyo", correct: true }, { text: "Kyoto", correct: false }] }
+                    ]
+                },
+                exam: {
+                    10: [{ question: "Bagian sel tumbuhan yang berfungsi untuk fotosintesis adalah...", image: "https://placehold.co/400x200/22c55e/ffffff?text=Sel+Tumbuhan", answers: [{ text: "Kloroplas", correct: true }, { text: "Mitokondria", correct: false }, { text: "Nukleus", correct: false }] }],
+                    11: [{ question: "Rumus kimia untuk air adalah...", answers: [{ text: "H2O", correct: true }, { text: "CO2", correct: false }] }],
+                    12: [{ question: "Planet terbesar di tata surya kita adalah...", answers: [{ text: "Jupiter", correct: true }, { text: "Saturnus", correct: false }] }]
+                }
+            },
+            en: { /* English questions structure is similar */ }
+        };
+        const uiText = {
+            id: { portalTitle: "Portal Ujian & Kuis", welcomeMessage: "Selamat datang! Silakan pilih mode yang Anda inginkan.", quizModeTitle: "Kuis Latihan", quizModeDesc: "Asah pengetahuan dengan kode", examModeTitle: "Ujian Semester", examModeDescStudent: "Wajib login dengan NISN", adminLoginLink: "Login sebagai Guru (Admin)", loginTitleStudent: "Login Siswa", loginDescStudent: "Masukkan NISN dan Password Anda.", loginTitleAdmin: "Login Guru (Admin)", loginDescAdmin: "Masukkan Username dan Password khusus.", usernameLabelStudent: "NISN", usernameLabelAdmin: "Username Guru", passwordLabel: "Password", invalidLoginError: "Login Gagal! Periksa kembali data Anda.", loginButton: "Login", backToMenuButton: "Kembali ke Menu", adminTitle: "Dasbor Guru", adminWelcome: "Selamat datang,", logoutButton: "Logout", resultsTab: "Hasil Siswa", examQuestionsTab: "Kelola Soal Ujian", quizQuestionsTab: "Kelola Soal Kuis", summaryTitle: "Ringkasan", studentsSubmitted: "Jumlah Siswa Mengerjakan Ujian:", noResultsMessage: "Belum ada siswa yang mengerjakan ujian.", addQuestionButton: "Tambah Soal Baru", gradeLabel: "Kelas", allGradesLabel: "Semua Kelas", editButton: "Ubah", deleteButton: "Hapus", modalTitleAdd: "Tambah Soal Baru", modalTitleEdit: "Ubah Soal", questionLabel: "Pertanyaan", imageUrlLabel: "URL Gambar (Opsional)", correctAnswerInfo: "Pilih jawaban yang benar", addAnswerButton: "+ Jawaban", cancelButton: "Batal", saveButton: "Simpan", quizCodeTitle: "Masuk Kuis Latihan", quizCodeDesc: "Masukkan kode akses untuk memulai.", accessCodeLabel: "Kode Akses", invalidCodeError: "Kode akses salah!", enterButton: "Masuk", scoreLabel: "Skor", backButton: "Kembali", nextButton: "Selanjutnya →", finishButton: "Selesai", resultsTitle: "Hasil Anda", finalScoreLabel: "Skor Akhir:", backToMainMenuButton: "Kembali ke Menu Utama" },
+            en: { portalTitle: "Exam & Quiz Portal", welcomeMessage: "Welcome! Please select your desired mode.", quizModeTitle: "Practice Quiz", quizModeDesc: "Test your knowledge with a code", examModeTitle: "Semester Exam", examModeDescStudent: "Login with NISN is required", adminLoginLink: "Login as Teacher (Admin)", loginTitleStudent: "Student Login", loginDescStudent: "Enter your NISN and Password.", loginTitleAdmin: "Teacher (Admin) Login", loginDescAdmin: "Enter your special Username and Password.", usernameLabelStudent: "NISN", usernameLabelAdmin: "Teacher Username", passwordLabel: "Password", invalidLoginError: "Login Failed! Please check your credentials.", loginButton: "Login", backToMenuButton: "Back to Menu", adminTitle: "Teacher Dashboard", adminWelcome: "Welcome,", logoutButton: "Logout", resultsTab: "Student Results", examQuestionsTab: "Manage Exam Questions", quizQuestionsTab: "Manage Quiz Questions", summaryTitle: "Summary", studentsSubmitted: "Number of Students who took the Exam:", noResultsMessage: "No students have taken the exam yet.", addQuestionButton: "Add New Question", gradeLabel: "Grade", allGradesLabel: "All Grades", editButton: "Edit", deleteButton: "Delete", modalTitleAdd: "Add New Question", modalTitleEdit: "Edit Question", questionLabel: "Question", imageUrlLabel: "Image URL (Optional)", correctAnswerInfo: "Select the correct answer", addAnswerButton: "+ Answer", cancelButton: "Cancel", saveButton: "Save", quizCodeTitle: "Enter Practice Quiz", quizCodeDesc: "Enter the access code to start.", accessCodeLabel: "Access Code", invalidCodeError: "Incorrect access code!", enterButton: "Enter", scoreLabel: "Score", backButton: "Back", nextButton: "Next →", finishButton: "Finish", resultsTitle: "Your Results", finalScoreLabel: "Final Score:", backToMainMenuButton: "Back to Main Menu" }
+        };
+
+        // --- ELEMENTS ---
+        const screens = { mainMenu: document.getElementById('main-menu-screen'), quizCode: document.getElementById('quiz-code-screen'), login: document.getElementById('login-screen'), quiz: document.getElementById('quiz-screen'), results: document.getElementById('results-screen'), admin: document.getElementById('admin-screen') };
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const langIdBtn = document.getElementById('lang-id-btn');
+        const langEnBtn = document.getElementById('lang-en-btn');
+        const startQuizModeBtn = document.getElementById('start-quiz-mode-btn');
+        const startExamModeBtn = document.getElementById('start-exam-mode-btn');
+        const adminLoginLink = document.getElementById('admin-login-link');
+        const loginTitle = document.getElementById('login-title');
+        const loginDesc = document.getElementById('login-desc');
+        const usernameLabel = document.getElementById('username-label');
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const quizCodeForm = document.getElementById('quiz-code-form');
+        const quizCodeError = document.getElementById('quiz-code-error');
+        const adminWelcomeEl = document.getElementById('admin-welcome');
+        const adminTabs = document.querySelectorAll('.admin-tab');
+        const adminResultsContent = document.getElementById('admin-results-content');
+        const adminQuestionsContent = document.getElementById('admin-questions-content');
+        const submissionCountEl = document.getElementById('submission-count');
+        const examResultsListEl = document.getElementById('exam-results-list');
+        const gradeSelector = document.getElementById('grade-selector');
+        const questionListEl = document.getElementById('question-list');
+        const addQuestionBtn = document.getElementById('add-question-btn');
+        const questionEditorModal = document.getElementById('question-editor-modal');
+        const questionForm = document.getElementById('question-form');
+        const modalTitle = document.getElementById('modal-title');
+        const quizTitle = document.getElementById('quiz-title');
+        const scoreDisplay = document.getElementById('score-display');
+        const progressBar = document.getElementById('progress-bar');
+        const questionImageEl = document.getElementById('question-image');
+        const questionTextEl = document.getElementById('question-text');
+        const answerButtonsEl = document.getElementById('answer-buttons');
+        const scoreEl = document.getElementById('score');
+        const nextBtn = document.getElementById('next-btn');
+        const finishBtn = document.getElementById('finish-btn');
+        const studentNameResultEl = document.getElementById('student-name-result');
+        const finalScoreEl = document.getElementById('final-score');
+        const totalQuestionsEl = document.getElementById('total-questions');
+        const resultMessageEl = document.getElementById('result-message');
+
+        // --- APP STATE ---
+        let currentQuestionIndex, score, questions = [], userAnswers = [], currentMode = '', currentUser = null, currentLanguage = 'id', currentLoginType = 'student';
+
+        // --- FUNCTIONS ---
+        function showScreen(screen) { Object.values(screens).forEach(s => s.classList.add('hidden')); screen.classList.remove('hidden'); }
+        function changeLanguage(lang) {
+            currentLanguage = lang;
+            document.documentElement.lang = lang;
+            langIdBtn.classList.toggle('active', lang === 'id');
+            langEnBtn.classList.toggle('active', lang === 'en');
+            document.querySelectorAll('[data-key]').forEach(el => {
+                const key = el.dataset.key;
+                if (uiText[lang] && uiText[lang][key]) { el.innerText = uiText[lang][key]; }
+            });
+            if (!screens.admin.classList.contains('hidden')) { renderResultsDashboard(); renderQuestionManager(document.querySelector('.admin-tab.active').dataset.tab.startsWith('exam') ? 'exam' : 'quiz'); }
+            if (!screens.login.classList.contains('hidden')) { setupLoginForm(currentLoginType); }
+        }
+        function toggleTheme() {
+            const html = document.documentElement;
+            html.classList.toggle('dark');
+            html.classList.toggle('light');
+            document.getElementById('theme-icon-dark').classList.toggle('hidden');
+            document.getElementById('theme-icon-light').classList.toggle('hidden');
+            localStorage.setItem('theme', html.classList.contains('dark') ? 'dark' : 'light');
+        }
+        function setupLoginForm(type) {
+            currentLoginType = type;
+            loginForm.reset();
+            loginError.classList.add('hidden');
+            if (type === 'student') {
+                loginTitle.innerText = uiText[currentLanguage].loginTitleStudent;
+                loginDesc.innerText = uiText[currentLanguage].loginDescStudent;
+                usernameLabel.innerText = uiText[currentLanguage].usernameLabelStudent;
+                document.getElementById('username').placeholder = 'Masukkan NISN';
+            } else { // admin
+                loginTitle.innerText = uiText[currentLanguage].loginTitleAdmin;
+                loginDesc.innerText = uiText[currentLanguage].loginDescAdmin;
+                usernameLabel.innerText = uiText[currentLanguage].usernameLabelAdmin;
+                document.getElementById('username').placeholder = 'Masukkan Username Guru';
+            }
+            showScreen(screens.login);
+        }
+        function renderResultsDashboard() {
+            submissionCountEl.innerText = examResultsDatabase.length;
+            examResultsListEl.innerHTML = ''; 
+            if (examResultsDatabase.length === 0) {
+                examResultsListEl.innerHTML = `<p class="text-desc text-center italic">${uiText[currentLanguage].noResultsMessage}</p>`;
+            } else {
+                examResultsDatabase.forEach(result => {
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = 'p-3 bg-tertiary rounded-lg flex justify-between items-center text-sm';
+                    const submissionTime = new Date(result.timestamp).toLocaleString(currentLanguage === 'id' ? 'id-ID' : 'en-US');
+                    resultDiv.innerHTML = `<div><p class="font-bold">${result.name} <span class="font-normal text-desc">(NISN: ${result.nisn})</span></p><p class="text-xs text-desc">${submissionTime}</p></div><p class="font-bold text-lg text-accent">${result.score} / ${result.totalQuestions}</p>`;
+                    examResultsListEl.appendChild(resultDiv);
+                });
+            }
+        }
+        function renderQuestionManager(mode) {
+            const isExam = mode === 'exam-questions';
+            gradeSelector.innerHTML = '';
+            if (isExam) {
+                Object.keys(questionsDB.id.exam).forEach(grade => {
+                    const option = document.createElement('option');
+                    option.value = grade;
+                    option.innerText = `${uiText[currentLanguage].gradeLabel} ${grade}`;
+                    gradeSelector.appendChild(option);
+                });
+                gradeSelector.classList.remove('hidden');
+            } else {
+                const option = document.createElement('option');
+                option.value = 'all';
+                option.innerText = uiText[currentLanguage].allGradesLabel;
+                gradeSelector.appendChild(option);
+            }
+            populateQuestionList(isExam ? gradeSelector.value : 'all', isExam ? 'exam' : 'quiz');
+        }
+        function populateQuestionList(grade, mode) {
+            questionListEl.innerHTML = '';
+            const questions = mode === 'exam' ? questionsDB.id.exam[grade] : questionsDB.id.quiz[grade];
+            if (!questions || questions.length === 0) return;
+            questions.forEach((q, index) => {
+                const qDiv = document.createElement('div');
+                qDiv.className = 'p-3 bg-tertiary rounded-lg';
+                qDiv.innerHTML = `<div class="flex justify-between items-start"><p class="text-sm flex-1 pr-4">${index + 1}. ${q.question}</p><div class="flex gap-2"><button class="edit-btn text-xs bg-sky-600 hover:bg-sky-700 px-2 py-1 rounded" data-key="editButton">Ubah</button><button class="delete-btn text-xs bg-red-600 hover:bg-red-700 px-2 py-1 rounded" data-key="deleteButton">Hapus</button></div></div>`;
+                qDiv.querySelector('.edit-btn').addEventListener('click', () => showQuestionModal(mode, grade, index));
+                qDiv.querySelector('.delete-btn').addEventListener('click', () => handleDeleteQuestion(mode, grade, index));
+                questionListEl.appendChild(qDiv);
+            });
+            changeLanguage(currentLanguage); // To update button texts
+        }
+        function showQuestionModal(mode, grade, index = null) {
+            questionForm.reset();
+            document.getElementById('question-mode').value = mode;
+            document.getElementById('question-grade').value = grade;
+            document.getElementById('question-index').value = index;
+            document.getElementById('answers-container').innerHTML = '';
+            
+            if (index !== null) { // Editing existing question
+                modalTitle.dataset.key = "modalTitleEdit";
+                const question = questionsDB.id[mode][grade][index];
+                document.getElementById('question-input').value = question.question;
+                document.getElementById('image-url-input').value = question.image || '';
+                question.answers.forEach(ans => addAnswerField(ans.text, ans.correct));
+            } else { // Adding new question
+                modalTitle.dataset.key = "modalTitleAdd";
+                addAnswerField('', false); addAnswerField('', false);
+            }
+            changeLanguage(currentLanguage); // To update modal texts
+            questionEditorModal.classList.add('flex');
+            questionEditorModal.classList.remove('hidden');
+        }
+        function addAnswerField(text = '', isCorrect = false) {
+            const id = `answer-${Date.now()}`;
+            const div = document.createElement('div');
+            div.className = 'flex items-center gap-2';
+            div.innerHTML = `<div class="flex-grow"><input type="text" value="${text}" class="answer-text border text-sm rounded-lg block w-full p-2.5" required></div><div class="flex items-center gap-2"><input type="radio" name="correct-answer" id="${id}" class="correct-answer-radio w-4 h-4" ${isCorrect ? 'checked' : ''}><button type="button" class="remove-answer-btn text-red-500 hover:text-red-400 font-bold">X</button></div>`;
+            div.querySelector('.remove-answer-btn').addEventListener('click', () => div.remove());
+            document.getElementById('answers-container').appendChild(div);
+        }
+        function handleSaveQuestion(e) {
+            e.preventDefault();
+            const mode = document.getElementById('question-mode').value;
+            const grade = document.getElementById('question-grade').value;
+            let index = document.getElementById('question-index').value;
+            
+            const answers = [];
+            document.querySelectorAll('#answers-container .flex.items-center.gap-2').forEach(div => {
+                answers.push({
+                    text: div.querySelector('.answer-text').value,
+                    correct: div.querySelector('.correct-answer-radio').checked
+                });
+            });
+
+            if (!answers.some(a => a.correct)) { alert("Silakan pilih satu jawaban yang benar."); return; }
+            
+            const newQuestion = {
+                question: document.getElementById('question-input').value,
+                image: document.getElementById('image-url-input').value || undefined,
+                answers: answers
+            };
+
+            if (index !== 'null' && index !== '') { // Update
+                questionsDB.id[mode][grade][parseInt(index)] = newQuestion;
+            } else { // Add
+                if (!questionsDB.id[mode][grade]) questionsDB.id[mode][grade] = [];
+                questionsDB.id[mode][grade].push(newQuestion);
+            }
+            
+            questionEditorModal.classList.add('hidden');
+            questionEditorModal.classList.remove('flex');
+            populateQuestionList(grade, mode);
+        }
+        function handleDeleteQuestion(mode, grade, index) {
+            if (confirm("Apakah Anda yakin ingin menghapus soal ini?")) {
+                questionsDB.id[mode][grade].splice(index, 1);
+                populateQuestionList(grade, mode);
+            }
+        }
+        function startQuiz(mode) {
+            currentMode = mode; currentQuestionIndex = 0; score = 0; scoreEl.innerText = score;
+            if (mode === 'quiz') {
+                questions = shuffleArray([...(questionsDB.id.quiz.all || [])]);
+            } else {
+                questions = shuffleArray([...(questionsDB.id.exam[currentUser.grade] || [])]);
+            }
+            quizTitle.innerText = uiText[currentLanguage][mode === 'quiz' ? 'quizModeTitle' : 'examModeTitle'];
+            scoreDisplay.style.display = mode === 'quiz' ? 'block' : 'none';
+            userAnswers = new Array(questions.length).fill(null);
+            showScreen(screens.quiz);
+            showQuestion();
+        }
+        function shuffleArray(array) { return array.sort(() => Math.random() - 0.5); }
+        function showQuestion() {
+            resetState();
+            const currentQuestion = questions[currentQuestionIndex];
+            if (currentQuestion.image) {
+                questionImageEl.src = currentQuestion.image;
+                questionImageEl.classList.remove('hidden');
+            }
+            questionTextEl.innerText = `${currentQuestionIndex + 1}. ${currentQuestion.question}`;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+            shuffleArray(currentQuestion.answers).forEach(answer => {
+                const button = document.createElement('button');
+                button.innerText = answer.text;
+                button.className = 'w-full btn-secondary border p-4 rounded-lg text-left hover:bg-slate-600 transition';
+                if (answer.correct) button.dataset.correct = "true";
+                button.addEventListener('click', selectAnswer);
+                answerButtonsEl.appendChild(button);
+            });
+            const isLastQuestion = currentQuestionIndex === questions.length - 1;
+            finishBtn.style.display = (currentMode === 'exam' && isLastQuestion) ? 'block' : 'none';
+        }
+        function resetState() {
+            nextBtn.classList.add('hidden');
+            questionImageEl.classList.add('hidden');
+            answerButtonsEl.innerHTML = '';
+        }
+        function selectAnswer(e) {
+            const selectedBtn = e.target;
+            if (currentMode === 'quiz') {
+                if (selectedBtn.dataset.correct) { score++; scoreEl.innerText = score; }
+                Array.from(answerButtonsEl.children).forEach(button => { button.classList.add(button.dataset.correct ? 'correct' : 'incorrect', 'btn-disabled'); });
+                if (questions.length > currentQuestionIndex + 1) nextBtn.classList.remove('hidden');
+                else setTimeout(showResults, 1000);
+            } else { // Exam mode
+                Array.from(answerButtonsEl.children).forEach(b => b.classList.remove('selected'));
+                selectedBtn.classList.add('selected');
+                userAnswers[currentQuestionIndex] = selectedBtn.innerText;
+                if (questions.length > currentQuestionIndex + 1) nextBtn.classList.remove('hidden');
+            }
+        }
+        function showResults() {
+            if (currentMode === 'exam') {
+                let examScore = 0;
+                questions.forEach((q, i) => { if (q.answers.find(a => a.correct).text === userAnswers[i]) examScore++; });
+                score = examScore;
+                examResultsDatabase.push({ nisn: currentUser.nisn, name: currentUser.name, score: score, totalQuestions: questions.length, timestamp: new Date().toISOString() });
+                studentNameResultEl.innerText = `${currentUser.name} (NISN: ${currentUser.nisn})`;
+                studentNameResultEl.classList.remove('hidden');
+            } else {
+                studentNameResultEl.classList.add('hidden');
+            }
+            showScreen(screens.results);
+            finalScoreEl.innerText = score;
+            totalQuestionsEl.innerText = questions.length;
+        }
+
+        // --- EVENT LISTENERS ---
+        document.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('theme') === 'light') { toggleTheme(); }
+            showScreen(screens.mainMenu);
+            changeLanguage('id');
+
+            themeToggleBtn.addEventListener('click', toggleTheme);
+            langIdBtn.addEventListener('click', () => changeLanguage('id'));
+            langEnBtn.addEventListener('click', () => changeLanguage('en'));
+            startQuizModeBtn.addEventListener('click', () => showScreen(screens.quizCode));
+            startExamModeBtn.addEventListener('click', () => setupLoginForm('student'));
+            adminLoginLink.addEventListener('click', (e) => { e.preventDefault(); setupLoginForm('admin'); });
+            
+            document.getElementById('back-to-menu-from-login').addEventListener('click', () => showScreen(screens.mainMenu));
+            document.getElementById('back-to-menu-from-code').addEventListener('click', () => showScreen(screens.mainMenu));
+            document.getElementById('back-to-menu-from-quiz').addEventListener('click', () => showScreen(screens.mainMenu));
+            document.getElementById('restart-btn').addEventListener('click', () => showScreen(screens.mainMenu));
+            document.getElementById('admin-logout-btn').addEventListener('click', () => showScreen(screens.mainMenu));
+
+            quizCodeForm.addEventListener('submit', e => {
+                e.preventDefault();
+                if (document.getElementById('quiz-code').value === QUIZ_ACCESS_CODE) { quizCodeError.classList.add('hidden'); startQuiz('quiz'); } else { quizCodeError.classList.remove('hidden'); }
+            });
+
+            loginForm.addEventListener('submit', e => {
+                e.preventDefault();
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                let user;
+                if (currentLoginType === 'student') {
+                    user = studentDatabase.find(s => s.nisn === username && s.password === password);
+                    if(user) { currentUser = user; startQuiz('exam'); }
+                } else {
+                    user = adminDatabase.find(a => a.username === username && a.password === password);
+                    if (user) {
+                        adminWelcomeEl.innerText = `${uiText[currentLanguage].adminWelcome} ${user.name}`;
+                        showScreen(screens.admin);
+                        renderResultsDashboard();
+                        adminTabs[0].click();
+                    }
+                }
+                loginError.classList.toggle('hidden', !!user);
+            });
+
+            adminTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    adminTabs.forEach(t => t.classList.remove('active', 'border-accent', 'text-accent'));
+                    tab.classList.add('active', 'border-accent', 'text-accent');
+                    const isResults = tab.dataset.tab === 'results';
+                    adminResultsContent.classList.toggle('hidden', !isResults);
+                    adminQuestionsContent.classList.toggle('hidden', isResults);
+                    if (!isResults) { renderQuestionManager(tab.dataset.tab); } else { renderResultsDashboard(); }
+                });
+            });
+
+            gradeSelector.addEventListener('change', (e) => {
+                const mode = document.querySelector('.admin-tab.active').dataset.tab.startsWith('exam') ? 'exam' : 'quiz';
+                populateQuestionList(e.target.value, mode);
+            });
+            
+            addQuestionBtn.addEventListener('click', () => {
+                const mode = document.querySelector('.admin-tab.active').dataset.tab.startsWith('exam') ? 'exam' : 'quiz';
+                showQuestionModal(mode, gradeSelector.value, null);
+            });
+            
+            questionForm.addEventListener('submit', handleSaveQuestion);
+            document.getElementById('cancel-edit-btn').addEventListener('click', () => { questionEditorModal.classList.add('hidden'); questionEditorModal.classList.remove('flex'); });
+            document.getElementById('add-answer-btn').addEventListener('click', () => addAnswerField());
+            nextBtn.addEventListener('click', () => { currentQuestionIndex++; showQuestion(); });
+            finishBtn.addEventListener('click', showResults);
+        });
+    </script>
+</body>
+</html>
+
